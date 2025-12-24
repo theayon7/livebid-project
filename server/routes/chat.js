@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/authMiddleware');
 
-// Using the most stable production endpoint
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+// Change v1beta to v1 for better production stability on Render
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY; 
 
 router.post('/ask', protect, async (req, res) => {
@@ -12,17 +12,14 @@ router.post('/ask', protect, async (req, res) => {
     if (!query) return res.status(400).json({ msg: 'Query is required.' });
 
     try {
-        // Simplified Payload: No system instructions or tools to avoid "Refusal" errors
+        // Simplified Payload: We put the Persona inside the text parts
         const payload = {
             contents: [{ 
-                parts: [{ text: `You are Aucto, an Auction helper. Question: ${query}` }] 
-            }],
-            safetySettings: [
-                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-            ]
+                parts: [{ 
+                    text: `Persona: You are Aucto, a helpful auction support assistant for the LiveBid platform. 
+                           User Question: ${query}` 
+                }] 
+            }]
         };
 
         const apiResponse = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
@@ -33,16 +30,22 @@ router.post('/ask', protect, async (req, res) => {
 
         const result = await apiResponse.json();
 
-        // LOG THE ERROR IN RENDER: This helps you see exactly why Google said no
+        // THIS IS THE CRITICAL PART: Check Render Logs for this output!
         if (result.error) {
-            console.error("GOOGLE API ERROR:", JSON.stringify(result.error));
-            return res.json({ response: "Aucto is calibrating... please try one more time." });
+            console.error("CRITICAL GOOGLE ERROR:", JSON.stringify(result.error));
+            
+            // If the error is 'User location is not supported', we know the region is the issue
+            if (result.error.message.includes("location")) {
+                return res.json({ response: "I'm sorry! My AI brain is hosted in a region Google doesn't support yet. Please check back later!" });
+            }
+            
+            return res.json({ response: "Aucto is having trouble connecting to Google. Please verify your API Key." });
         }
 
         if (result.candidates && result.candidates[0].content && result.candidates[0].content.parts) {
             res.json({ response: result.candidates[0].content.parts[0].text });
         } else {
-            res.json({ response: "I'm sorry, I can't process that specific query. Try asking about bidding!" });
+            res.json({ response: "I'm here, but I couldn't generate an answer. Try asking something else!" });
         }
 
     } catch (error) {
