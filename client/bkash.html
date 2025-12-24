@@ -265,7 +265,7 @@
 
                 // --- SEND REQUEST ---
                 // Ensure port is 8080 (Matches your server.js)
-                const response = await fetch(`http://localhost:8080/api/items/pay/${itemId}`, {
+                const response = await fetch(`https://livebid-server.onrender.com/api/items/pay/${itemId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

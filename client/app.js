@@ -1,5 +1,9 @@
-const API_URL = 'http://localhost:8080/api';
-const SOCKET_URL = 'http://localhost:8080';
+
+// const API_URL = 'http://localhost:8080/api';
+// const SOCKET_URL = 'http://localhost:8080';
+
+const API_URL = 'https://livebid-server.onrender.com/api'; 
+const SOCKET_URL = 'https://livebid-server.onrender.com';
 
 // Global state
 const bootstrap = window.bootstrap;
