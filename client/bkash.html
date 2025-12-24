@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bKash Payment</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: rgba(0, 0, 0, 0.5); /* Dimmed background */
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .bkash-container {
+            width: 360px;
+            background-color: #fff;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+            background-image: url('https://i.ibb.co/pL1T9k6/bkash-watermark.png'); 
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+
+        /* --- Header Section --- */
+        .header {
+            background-color: #E2136E; /* Official Pink */
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .header img {
+            height: 40px;
+            background: white;
+            padding: 5px;
+            border-radius: 4px;
+        }
+        .header-info {
+            text-align: right;
+            font-size: 12px;
+        }
+        .header-info strong {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        /* --- Payment Details --- */
+        .merchant-info {
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .merchant-name {
+            font-size: 14px;
+            color: #666;
+        }
+        .merchant-name span {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            font-size: 16px;
+            margin-top: 3px;
+        }
+        .amount-tag {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        /* --- Body / Inputs --- */
+        .body {
+            padding: 25px 30px;
+            text-align: center;
+            background: white;
+        }
+        .input-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .bkash-input {
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+            outline: none;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            box-sizing: border-box; 
+            background-image: url('https://i.ibb.co/2Z5q95J/bkash-icon-input.png'); 
+            background-size: 25px;
+            background-position: 10px center;
+            background-repeat: no-repeat;
+            padding-left: 40px;
+        }
+        .bkash-input:focus {
+            border-color: #E2136E;
+            box-shadow: 0 0 5px rgba(226, 19, 110, 0.2);
+        }
+        
+        .legal-text {
+            font-size: 11px;
+            color: #888;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+        .legal-text a {
+            color: #E2136E;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        /* --- Footer Buttons --- */
+        .footer {
+            display: flex;
+            background-color: #ddd;
+        }
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-close {
+            background-color: #e0e0e0;
+            color: #555;
+        }
+        .btn-close:hover { background-color: #d0d0d0; }
+        
+        .btn-confirm {
+            background-color: #E2136E;
+            color: white;
+        }
+        .btn-confirm:hover { background-color: #c2105e; }
+        
+        /* --- Phone Call Footer --- */
+        .helpline {
+            text-align: center;
+            font-size: 18px;
+            color: #E2136E;
+            padding: 10px;
+            background: white;
+            font-weight: bold;
+            border-top: 1px solid #eee;
+        }
+        .helpline span { font-size: 12px; color: #666; font-weight: normal; }
+
+        /* --- Loading Overlay --- */
+        .loader {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.9);
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 10;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #E2136E;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="bkash-container">
+        <div class="header">
+            <img src="https://logos-download.com/wp-content/uploads/2022/01/BKash_Logo_icon.png" alt="bKash">
+            <div class="header-info">
+                <strong>LiveBid Auction</strong>
+                Invoice: <span id="invoiceId">TRX-001</span>
+            </div>
+        </div>
+
+        <div class="merchant-info">
+            <div class="merchant-name">
+                Merchant
+                <span>LiveBid Official</span>
+            </div>
+            <div class="amount-tag">
+                ৳ <span id="displayAmount">0.00</span>
+            </div>
+        </div>
+
+        <div class="body">
+            <label class="input-label">Your bKash Account Number</label>
+            <input type="text" class="bkash-input" placeholder="e.g 017XXXXXXXX" maxlength="11" id="phoneInput">
+            
+            <p class="legal-text">
+                By clicking on <strong>Confirm</strong>, you are agreeing to the <a href="#">terms & conditions</a> of your bKash Account.
+            </p>
+        </div>
+
+        <div class="footer">
+            <button class="btn btn-close" onclick="window.history.back()">Close</button>
+            <button class="btn btn-confirm" onclick="handlePayment()">Confirm</button>
+        </div>
+
+        <div class="helpline">
+            📞 16247 <span>24/7 Support</span>
+        </div>
+
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <p style="margin-top:10px; color:#555; font-size:14px;">Processing...</p>
+        </div>
+    </div>
+
+    <script>
+        // 1. Get Details from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const amount = urlParams.get('amount') || '0';
+        const itemId = urlParams.get('itemId'); 
+
+        document.getElementById('displayAmount').innerText = parseFloat(amount).toFixed(2);
+        document.getElementById('invoiceId').innerText = "TRX-" + Math.floor(Math.random() * 1000000);
+
+        async function handlePayment() {
+            const phone = document.getElementById('phoneInput').value;
+            const loader = document.getElementById('loader');
+
+            // Simple validation
+            if (phone.length < 11) {
+                alert("Please enter a valid bKash number");
+                return;
+            }
+
+            loader.style.display = 'flex';
+
+            try {
+                const token = localStorage.getItem('token'); 
+                
+                if (!token) throw new Error("You are not logged in. Please login first.");
+                if (!itemId) throw new Error("No Item ID found in URL.");
+
+                console.log(`Processing payment for Item ID: ${itemId}`);
+
+                // --- SEND REQUEST ---
+                // Ensure port is 8080 (Matches your server.js)
+                const response = await fetch(`http://localhost:8080/api/items/pay/${itemId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': token
+                    }
+                });
+
+                // --- ROBUST ERROR HANDLING ---
+                // 1. Read the response as TEXT first (prevents "Unexpected token S" crash)
+                const responseText = await response.text();
+                
+                // 2. Try to parse it as JSON
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (e) {
+                    // If parsing fails, it's a plain text error (like "Server Error")
+                    throw new Error(`Server Error (${response.status}): ${responseText}`);
+                }
+
+                // 3. Check for application logic errors
+                if (!response.ok) {
+                    throw new Error(data.msg || `Error (${response.status})`);
+                }
+
+                // --- SUCCESS ---
+                alert("Payment Successful! ✅\nTransaction ID: 9G45H4K8");
+                window.location.href = 'index.html'; 
+
+            } catch (error) {
+                console.error("Payment Process Error:", error);
+                
+                if (error.message.includes("Failed to fetch")) {
+                    alert("Network Error: Is the server running on Port 8080?");
+                } else {
+                    alert("Payment Failed:\n" + error.message);
+                }
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveBid Socket Test Client</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        h1 { color: #007bff; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        input[type="text"], input[type="number"] { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 15px; margin-top: 10px; cursor: pointer; border: none; border-radius: 4px; color: white; background-color: #28a745; margin-right: 10px; }
+        button:hover { opacity: 0.9; }
+        #log { 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            height: 250px; 
+            overflow-y: scroll; 
+            margin-top: 10px; 
+            background: #fff; 
+            font-size: 0.9em; 
+            line-height: 1.4;
+        }
+        .error { color: red; font-weight: bold; }
+        .success { color: green; font-weight: bold; }
+        .info { color: #007bff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LiveBid Real-Time Test Client</h1>
+        <p>
+            <label>Auction ID (Item ID):</label>
+            <input type="text" id="auctionIdInput" placeholder="Paste your Auction Item ID here">
+        </p>
+        <p>
+            <label>User ID (Your Seller/Bidder ID):</label>
+            <input type="text" id="userIdInput" placeholder="Paste your User ID here">
+        </p>
+        <p>
+            <label>Bid Amount:</label>
+            <input type="number" id="bidAmountInput" value="105.00" step="0.01">
+        </p>
+        
+        <button onclick="joinRoom()">1. Connect & Join Auction</button>
+        <button onclick="placeBid()">2. Place Bid</button>
+        <button onclick="disconnect()" style="background-color: #dc3545;">3. Disconnect</button>
+        
+        <h2>Connection Log:</h2>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    
+    <script>
+        let socket;
+        const logDiv = document.getElementById('log');
+
+        function log(message, type = 'info') {
+            const p = document.createElement('p');
+            p.innerHTML = `<span class="${type}">[${new Date().toLocaleTimeString()}] ${message}</span>`;
+            logDiv.appendChild(p);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function joinRoom() {
+            const auctionId = document.getElementById('auctionIdInput').value;
+            if (!auctionId || !document.getElementById('userIdInput').value) {
+                log('Error: Please enter both Auction ID and User ID.', 'error');
+                return;
+            }
+
+            // 1. CONNECT: Use the correct server address (Port 8080)
+            socket = io('http://localhost:8080');
+
+            socket.on('connect', () => {
+                log('**Server Connection Successful!**', 'success');
+                // 2. JOIN ROOM: Send the 'joinAuction' event to the server
+                socket.emit('joinAuction', auctionId);
+                log(`Joined Auction Room: <b>${auctionId}</b>`, 'info');
+            });
+
+            // 3. LISTEN: Handle bid updates broadcasted from the server
+            socket.on('bidUpdate', (data) => {
+                log(`💸 NEW BID! Amount: <b>$${data.newBid}</b> by User ${data.highestBidderId.substring(0, 5)}...`, 'success');
+                // Auto-increment the input field for the next quick bid
+                document.getElementById('bidAmountInput').value = (data.newBid + 5).toFixed(2); 
+            });
+
+            // 4. LISTEN: Handle errors from the server (e.g., bid too low)
+            socket.on('bidError', (data) => {
+                log(`❌ BID ERROR: ${data.msg}`, 'error');
+            });
+
+            socket.on('connect_error', (error) => {
+                log(`Connection Failed! Check Server/CORS. Error: ${error.message}`, 'error');
+            });
+            
+            socket.on('disconnect', () => {
+                log('🔌 Disconnected from server.', 'info');
+            });
+        }
+
+        function placeBid() {
+            if (!socket || !socket.connected) {
+                log('Error: Not connected. Click "Connect & Join" first.', 'error');
+                return;
+            }
+            
+            const auctionId = document.getElementById('auctionIdInput').value;
+            const userId = document.getElementById('userIdInput').value;
+            const amount = parseFloat(document.getElementById('bidAmountInput').value);
+
+            log(`Attempting to send bid $${amount}...`);
+            
+            // 5. SEND: Emit the 'placeBid' event to the server
+            socket.emit('placeBid', { auctionId, userId, amount });
+        }
+
+        function disconnect() {
+            if (socket) {
+                socket.disconnect();
+                log('Initiating Disconnect...', 'info');
+            }
+        }
+    </script>
+</body>
+</html>

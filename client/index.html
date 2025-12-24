@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiveBid ⚡️ | The Ultra-Premium Auction Platform</title>
+    
+    <meta name="description" content="Experience the thrill of real-time bidding. LiveBid offers a secure, premium marketplace for exclusive items.">
+    <meta property="og:title" content="LiveBid ⚡️ Real-Time Auctions">
+    <meta property="og:description" content="Bid Smart. Win Big. Join the next generation of online auctions.">
+    <meta property="og:image" content="https://placehold.co/1200x630/4f46e5/ffffff?text=LiveBid+Premium">
+    <meta name="theme-color" content="#4f46e5">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles.css">
+    
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
+
+    <style>
+        /* Cursor Follower Glow */
+        .cursor-glow {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(0,0,0,0) 70%);
+            position: fixed;
+            top: 0;
+            left: 0;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 0;
+            transition: opacity 0.3s ease;
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100 position-relative">
+
+    <div class="cursor-glow" id="cursor-glow"></div>
+    <div class="particles-container"></div>
+
+    <nav class="navbar navbar-expand-lg fixed-top glass transition-all">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+                <span class="text-gradient fw-black tracking-tight">LiveBid</span>
+            </a>
+            
+            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="fas fa-bars text-primary"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-lg-3">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" id="nav-active-btn">
+                            <i class="fa-solid fa-fire-flame-curved me-1 text-danger"></i> Live Auctions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="nav-ended-btn">
+                            <i class="fa-solid fa-trophy me-1 text-warning"></i> Past Results
+                        </a>
+                    </li>
+                    <li class="nav-item ms-lg-2">
+                        <div id="auth-link">
+                            <a class="btn btn-primary btn-sm px-4 shadow-lg hover-lift" href="#">
+                                <i class="fa-solid fa-user me-2"></i> Login
+                            </a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content container position-relative z-10" style="margin-top: 80px;">
+        
+        <div class="hero-wrapper text-center d-flex flex-column align-items-center justify-content-center">
+            <div class="hero-blob blob-1"></div>
+            <div class="hero-blob blob-2"></div>
+            
+            <div class="hero-content" style="max-width: 800px;">
+                <div class="badge bg-white text-primary rounded-pill px-3 py-2 mb-4 shadow-sm fw-bold animate-fade-in-up">
+                    <span class="live-dot-small bg-danger me-2"></span> REAL-TIME MARKETPLACE
+                </div>
+                
+                <h1 class="hero-title mb-4">
+                    Discover. Bid. <br>
+                    <span class="text-gradient">Collect the Extraordinary.</span>
+                </h1>
+                
+                <p class="hero-subtitle mx-auto">
+                    Participate in secure, live auctions for exclusive items. 
+                    Real-time updates, instant bidding, and premium support.
+                </p>
+
+                <div class="d-flex gap-3 justify-content-center mb-5 animate-fade-in-up" style="animation-delay: 0.2s;">
+                    <button onclick="document.getElementById('catalog-section').scrollIntoView({behavior: 'smooth'})" 
+                            class="btn btn-primary btn-lg px-5 py-3 rounded-pill">
+                        Start Bidding <i class="fa-solid fa-arrow-right ms-2"></i>
+                    </button>
+                    <button onclick="document.getElementById('open-chat-btn').click()" 
+                            class="btn btn-outline-warning btn-lg px-5 py-3 rounded-pill glass">
+                        Get Support
+                    </button>
+                </div>
+
+                <div class="row g-4 justify-content-center w-100">
+                    <div class="col-md-4" data-tilt data-tilt-max="10" data-tilt-speed="400">
+                        <div class="card glass text-center p-4 border-0 h-100">
+                            <div class="fs-1 mb-2">🔥</div>
+                            <h3 class="fw-bold mb-0 text-gradient" id="live-auction-count">0</h3>
+                            <div class="text-muted small fw-bold text-uppercase tracking-wider">Active Auctions</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4" data-tilt data-tilt-max="10" data-tilt-speed="400">
+                        <div class="card glass text-center p-4 border-0 h-100">
+                            <div class="fs-1 mb-2">💎</div>
+                            <h3 class="fw-bold mb-0 text-gradient" id="total-bids">$0</h3>
+                            <div class="text-muted small fw-bold text-uppercase tracking-wider">Total Volume</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section id="catalog-section" class="mb-5 position-relative">
+            <div class="d-flex justify-content-between align-items-end mb-4 border-bottom border-light pb-3">
+                <div>
+                    <h2 class="mb-1"><i class="fa-solid fa-gavel text-primary me-2"></i>Live Catalog</h2>
+                    <p class="text-muted mb-0">Hurry! These items are closing soon.</p>
+                </div>
+                <div class="bg-live rounded-pill px-3 py-1">
+                    LIVE FEED
+                </div>
+            </div>
+
+            <div class="row g-4" id="auction-catalog">
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm" aria-hidden="true">
+                        <div class="bg-secondary" style="height: 220px; opacity: 0.1;"></div>
+                        <div class="card-body">
+                            <h5 class="card-title placeholder-glow">
+                                <span class="placeholder col-6"></span>
+                            </h5>
+                            <p class="card-text placeholder-glow">
+                                <span class="placeholder col-7"></span>
+                                <span class="placeholder col-4"></span>
+                            </p>
+                            <a href="#" class="btn btn-primary disabled placeholder col-6"></a>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            
+            <div id="empty-state" class="text-center py-5 d-none">
+                <div class="fs-1 text-muted mb-3 opacity-50"><i class="fa-regular fa-folder-open"></i></div>
+                <h4>No Active Auctions</h4>
+                <p class="text-muted">Check back later for new listings.</p>
+            </div>
+        </section>
+
+        <section id="ended-auctions-section" class="mb-5 d-none">
+            <div class="d-flex justify-content-between align-items-end mb-4 border-bottom border-light pb-3">
+                <div>
+                    <h2 class="mb-1"><i class="fa-solid fa-award text-warning me-2"></i>Hall of Fame</h2>
+                    <p class="text-muted mb-0">Past winners and closing prices.</p>
+                </div>
+            </div>
+            <div class="row g-4" id="ended-catalog">
+                </div>
+        </section>
+
+        <section id="auth-area" class="mb-5">
+            </section>
+
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="row g-5">
+                <div class="col-lg-4">
+                    <h4 class="text-white mb-4 fw-black">LiveBid ⚡️</h4>
+                    <p class="text-light opacity-75 mb-4">
+                        The world's most advanced real-time auction platform. 
+                        Built with MERN Stack + Socket.io for instant performance.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="btn btn-outline-light btn-sm rounded-circle" style="width: 40px; height: 40px; padding: 0; display: grid; place-items: center;"><i class="fa-brands fa-twitter"></i></a>
+                        <a href="#" class="btn btn-outline-light btn-sm rounded-circle" style="width: 40px; height: 40px; padding: 0; display: grid; place-items: center;"><i class="fa-brands fa-github"></i></a>
+                        <a href="#" class="btn btn-outline-light btn-sm rounded-circle" style="width: 40px; height: 40px; padding: 0; display: grid; place-items: center;"><i class="fa-brands fa-linkedin"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-6">
+                    <h6 class="text-primary-300 mb-3 text-uppercase tracking-wider">Platform</h6>
+                    <ul class="list-unstyled d-flex flex-column gap-2">
+                        <li><a href="#" class="text-light text-decoration-none opacity-75 hover:opacity-100">Live Auctions</a></li>
+                        <li><a href="#" class="text-light text-decoration-none opacity-75 hover:opacity-100">Past Results</a></li>
+                        <li><a href="#" class="text-light text-decoration-none opacity-75 hover:opacity-100">How it Works</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-6">
+                    <h6 class="text-primary-300 mb-3 text-uppercase tracking-wider">Support</h6>
+                    <ul class="list-unstyled d-flex flex-column gap-2">
+                        <li><a href="#" class="text-light text-decoration-none opacity-75 hover:opacity-100">Help Center</a></li>
+                        <li><a href="#" class="text-light text-decoration-none opacity-75 hover:opacity-100">Terms of Service</a></li>
+                        <li><a href="#" class="text-light text-decoration-none opacity-75 hover:opacity-100">Privacy Policy</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4">
+                    <h6 class="text-primary-300 mb-3 text-uppercase tracking-wider">Newsletter</h6>
+                    <p class="text-light opacity-75 small mb-3">Subscribe for auction alerts.</p>
+                    <div class="input-group">
+                        <input type="email" class="form-control border-0" placeholder="Enter your email">
+                        <button class="btn btn-primary">Subscribe</button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-top border-white border-opacity-10 mt-5 pt-4 text-center text-light opacity-50 small">
+                &copy; 2025 LiveBid Inc. All rights reserved.
+            </div>
+        </div>
+    </footer>
+
+    <div class="modal fade" id="auctionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content border-0">
+                <div class="modal-header text-white border-0 position-relative overflow-hidden" style="background: var(--color-primary-900); padding: 2rem;">
+                    <div class="position-relative z-10 w-100 d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="badge bg-white text-primary mb-2">LIVE ITEM</div>
+                            <h3 class="modal-title fw-bold" id="modal-item-title">Loading...</h3>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="position-absolute top-0 end-0 bg-primary opacity-25 rounded-circle" style="width: 200px; height: 200px; transform: translate(30%, -30%);"></div>
+                </div>
+
+                <div class="modal-body p-0">
+                    <div class="row g-0">
+                        <div class="col-lg-5 bg-light p-4 border-end">
+                            <h6 class="text-uppercase text-muted fw-bold small mb-3">Description</h6>
+                            <p id="modal-item-description" class="text-secondary lh-lg mb-5">...</p>
+                            
+                            <div class="card border-0 shadow-sm mb-3">
+                                <div class="card-body d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <div class="small text-muted fw-bold">TIME REMAINING</div>
+                                        <div class="fs-4 fw-mono text-danger" id="modal-timer">--:--:--</div>
+                                    </div>
+                                    <i class="fa-regular fa-clock fs-2 text-danger opacity-25"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="card border-0 shadow-sm bg-dark text-white">
+                                <div class="card-body">
+                                    <div class="small opacity-75 fw-bold mb-1">HIGHEST BIDDER</div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="bg-success rounded-circle" style="width: 8px; height: 8px;"></div>
+                                        <span id="modal-highest-bidder" class="fw-bold">No Bids Yet</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-7 p-4 p-md-5 d-flex flex-column justify-content-center bg-white">
+                            <div class="text-center mb-4">
+                                <div class="text-uppercase text-muted fw-bold small tracking-wider mb-2">CURRENT PRICE</div>
+                                <div class="display-3 fw-black text-primary" id="modal-current-bid">$0.00</div>
+                            </div>
+
+                            <div id="bid-message" class="alert d-none shadow-sm border-0 mb-4 text-center"></div>
+
+                            <form id="bid-form" class="w-100" style="max-width: 400px; margin: 0 auto;">
+                                <label class="form-label fw-bold">Place a Bid</label>
+                                <div class="input-group input-group-lg mb-3 shadow-sm">
+                                    <span class="input-group-text bg-white border-end-0 text-muted">$</span>
+                                    <input type="number" class="form-control border-start-0 ps-0" id="new-bid-amount" placeholder="0.00">
+                                </div>
+                                <div class="form-text mb-4 text-center">Minimum increment is $5.00</div>
+                                
+                                <button type="submit" id="submit-bid-btn" class="btn btn-primary btn-lg w-100 py-3 fw-bold shadow hover-lift">
+                                    CONFIRM BID <i class="fa-solid fa-gavel ms-2"></i>
+                                </button>
+                                
+                                <div id="login-required-alert" class="text-center mt-3 text-danger fw-bold d-none">
+                                    <i class="fa-solid fa-lock me-1"></i> Please login to bid
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="chatModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-2xl rounded-4 overflow-hidden" style="height: 600px;">
+                <div class="modal-header bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-0 p-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-white rounded-circle p-1">
+                            <img src="https://placehold.co/40x40/4f46e5/ffffff?text=AI" class="rounded-circle" width="32">
+                        </div>
+                        <div>
+                            <h6 class="mb-0 fw-bold">Aucto Assistant</h6>
+                            <div class="small opacity-75"><i class="fa-solid fa-circle text-success" style="font-size: 8px;"></i> Online</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-light p-3" id="chat-messages" style="background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px;">
+                    </div>
+                <div class="modal-footer bg-white p-2 border-top-0">
+                    <form id="chat-form" class="w-100 d-flex gap-2">
+                        <input type="text" id="chat-input" class="form-control border-0 bg-light rounded-pill px-4" placeholder="Type a message..." required>
+                        <button type="submit" class="btn btn-primary rounded-circle" style="width: 45px; height: 45px;"><i class="fa-solid fa-paper-plane"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button id="open-chat-btn" class="btn btn-primary rounded-circle shadow-lg position-fixed d-flex align-items-center justify-content-center" 
+            style="width: 60px; height: 60px; bottom: 30px; right: 30px; z-index: 1050; transition: transform 0.2s;">
+        <i class="fa-solid fa-comment-dots fs-4"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <script src="app.js"></script>
+
+    <script>
+        // 1. Mouse Follower Effect
+        document.addEventListener('mousemove', (e) => {
+            const glow = document.getElementById('cursor-glow');
+            glow.style.left = e.clientX + 'px';
+            glow.style.top = e.clientY + 'px';
+            glow.style.opacity = '1';
+        });
+
+        document.addEventListener('mouseleave', () => {
+            document.getElementById('cursor-glow').style.opacity = '0';
+        });
+
+        // 2. Initialize Vanilla Tilt on Cards
+        VanillaTilt.init(document.querySelectorAll("[data-tilt]"), {
+            max: 15,
+            speed: 400,
+            glare: true,
+            "max-glare": 0.2,
+        });
+        
+        // 3. Simple Particle Generator
+        const particleContainer = document.querySelector('.particles-container');
+        for(let i=0; i<30; i++) {
+            const p = document.createElement('div');
+            p.style.position = 'absolute';
+            p.style.width = Math.random() * 10 + 'px';
+            p.style.height = p.style.width;
+            p.style.background = 'rgba(99, 102, 241, ' + (Math.random() * 0.2) + ')';
+            p.style.borderRadius = '50%';
+            p.style.top = Math.random() * 100 + '%';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.animation = `float ${Math.random() * 10 + 10}s infinite linear`;
+            particleContainer.appendChild(p);
+        }
+
+        // Add float animation keyframes dynamically
+        const styleSheet = document.createElement("style");
+        styleSheet.innerText = `
+            @keyframes float {
+                0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+                50% { opacity: 1; }
+                100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(styleSheet);
+    </script>
+</body>
+</html>
